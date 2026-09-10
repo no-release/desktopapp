@@ -169,13 +169,24 @@ func _on_image_completed(result: int, response_code: int, _headers: PackedString
 	_pump_preview_queue()
 
 func _image_to_texture(body: PackedByteArray) -> Texture2D:
+	if body.size() < 12:
+		return null
 	var img := Image.new()
-	var err := img.load_png_from_buffer(body)
-	if err != OK:
+	var err := FAILED
+	# Detect format so Godot does not print "Not a PNG file" for JPEGs.
+	if body[0] == 0xFF and body[1] == 0xD8:
 		err = img.load_jpg_from_buffer(body)
-	if err != OK:
+	elif body[0] == 0x89 and body[1] == 0x50 and body[2] == 0x4E and body[3] == 0x47:
+		err = img.load_png_from_buffer(body)
+	elif body[0] == 0x52 and body[1] == 0x49 and body[2] == 0x46 and body[3] == 0x46:
 		err = img.load_webp_from_buffer(body)
-	if err != OK:
+	else:
+		err = img.load_jpg_from_buffer(body)
+		if err != OK:
+			err = img.load_webp_from_buffer(body)
+		if err != OK:
+			err = img.load_png_from_buffer(body)
+	if err != OK or img.is_empty():
 		return null
 	return ImageTexture.create_from_image(img)
 
