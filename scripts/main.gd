@@ -106,15 +106,16 @@ func _clear_grid() -> void:
 
 func _populate_grid(posts: Array) -> void:
 	for post in posts:
-		var cell := _make_cell(post)
-		grid.add_child(cell)
-		preview_queue.append({"url": post["preview"], "rect": cell.get_node("Thumb")})
+		var built: Dictionary = _make_cell(post)
+		grid.add_child(built["cell"])
+		preview_queue.append({"url": post["preview"], "rect": built["thumb"]})
 	_pump_preview_queue()
 
-func _make_cell(post: Dictionary) -> Control:
+func _make_cell(post: Dictionary) -> Dictionary:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(180, 220)
 	var v := VBoxContainer.new()
+	v.name = "Box"
 	panel.add_child(v)
 
 	var thumb := TextureRect.new()
@@ -134,7 +135,7 @@ func _make_cell(post: Dictionary) -> Control:
 	cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	cap.clip_text = true
 	v.add_child(cap)
-	return panel
+	return {"cell": panel, "thumb": thumb}
 
 func _pump_preview_queue() -> void:
 	if fetching_preview or preview_queue.is_empty():
